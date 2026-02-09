@@ -17,8 +17,9 @@ const config = { jwt_token: jwtToken, prospect_id: prospectId };
 fs.writeFileSync("config.json", JSON.stringify(config));
 
 function runExtractor() {
-  console.log("📡 Running Sunrun extractor...");
-  execSync("npx sunrun-api-extractor --config config.json", { stdio: "inherit" });
+  console.log("📡 Running Sunrun Rust extractor...");
+  // Run the Rust binary
+  execSync("./sunrun-api-extractor/target/release/sunrun-api-extractor --config config.json", { stdio: "inherit" });
 }
 
 function readJsonIfExists(filename) {
@@ -40,7 +41,7 @@ async function sendSMS(message) {
 
   await transporter.sendMail({
     from: process.env.EMAIL_USER,
-    to: process.env.EMAIL_TO, // should be phone@sms-gateway.com
+    to: process.env.EMAIL_TO, // phone SMS gateway
     subject: "",               // SMS gateways usually ignore this
     text: message,
   });
