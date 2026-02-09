@@ -1,10 +1,16 @@
 {
   "name": "solar-monitor",
   "version": "1.0.0",
-  "type": "module",
+  "description": "Daily solar SMS monitor",
+  "main": "solar-monitor.js",
+  "scripts": {
+    "start": "node solar-monitor.js"
+  },
   "dependencies": {
-    "nodemailer": "^6.9.4",
-    "sunrun-api-extractor": "^1.0.0"
+    "nodemailer": "^6.9.4"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }
 
