@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout the repo
+      # 1️⃣ Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v3
 
@@ -34,9 +34,8 @@ jobs:
 
       # 5️⃣ Build Rust extractor
       - name: Build sunrun-api-extractor
-        run: |
-          cd sunrun-api-extractor
-          cargo build --release
+        working-directory: sunrun-api-extractor
+        run: cargo build --release
 
       # 6️⃣ Run solar monitor SMS script
       - name: Run solar monitor SMS
