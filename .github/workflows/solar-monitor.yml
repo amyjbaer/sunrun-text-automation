@@ -46,6 +46,6 @@ jobs:
           EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
           EMAIL_TO: ${{ secrets.EMAIL_TO }}
           EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
-          JWT_TOKEN: ${{ secrets.JWT_TOKEN }}
-          PROSPECT_ID: ${{ secrets.PROSPECT_ID }}
+          JWT_TOKEN: ${{ secrets.SUNRUN_JWT }}
+          PROSPECT_ID: ${{ secrets.SUNRUN_PROSPECT }}
         # optionally: working-directory: path/to/your/script if not in root
