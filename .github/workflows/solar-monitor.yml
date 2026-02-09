@@ -1,9 +1,8 @@
 name: Build and Run SMS Automation
 
 on:
-  push:
-    branches:
-      - main
+  schedule:
+    - cron: '0 8 * * 1' # every Monday at 8:00 AM UTC
   workflow_dispatch: # allows manual runs from GitHub UI
 
 jobs:
@@ -29,12 +28,11 @@ jobs:
         run: npm install
 
       # 4. Set up Rust
-      - name: Setup Rust
+      - name: Setup Rust 1.79.0
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
+          toolchain: 1.79.0
           override: true
-          default: false
 
       # 5. Build Rust project in submodule
       - name: Build Rust project
