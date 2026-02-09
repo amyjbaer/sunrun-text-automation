@@ -1,26 +1,44 @@
 name: Daily Solar SMS
 
+# Trigger daily at 9 AM MST (16:00 UTC), and allow manual run
 on:
   schedule:
-    - cron: '0 16 * * *' # every day at 9:00 AM MST (16:00 UTC)
-  workflow_dispatch: # allows manual trigger
+    - cron: '0 16 * * *' 
+  workflow_dispatch:
 
 jobs:
   sms:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Checkout the repo
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # 2️⃣ Setup Node.js for SMS script
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '20'
 
-      - name: Install dependencies
+      # 3️⃣ Install SMS script dependencies
+      - name: Install Node.js dependencies
         run: npm install
 
+      # 4️⃣ Setup Rust for extractor
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      # 5️⃣ Build Rust extractor
+      - name: Build sunrun-api-extractor
+        run: |
+          cd sunrun-api-extractor
+          cargo build --release
+
+      # 6️⃣ Run solar monitor SMS script
       - name: Run solar monitor SMS
         env:
           SUNRUN_JWT: ${{ secrets.SUNRUN_JWT }}
