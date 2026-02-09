@@ -3,7 +3,7 @@ name: Daily Solar SMS
 # Trigger daily at 9 AM MST (16:00 UTC), and allow manual run
 on:
   schedule:
-    - cron: '0 16 * * *' 
+    - cron: '0 16 * * *'
   workflow_dispatch:
 
 jobs:
@@ -14,8 +14,8 @@ jobs:
       # 1️⃣ Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v3
-	with:
-	  path: .
+        with:
+          path: .
 
       # 2️⃣ Setup Node.js for SMS script
       - name: Setup Node.js
@@ -48,4 +48,3 @@ jobs:
           EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
           EMAIL_TO: ${{ secrets.EMAIL_TO }}
         run: node solar-monitor.js
-
