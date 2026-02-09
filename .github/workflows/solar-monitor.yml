@@ -1,15 +1,13 @@
-name: Build Project
+name: Build and Run SMS Automation
 
 on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
+  workflow_dispatch: # allows manual runs from GitHub UI
 
 jobs:
-  build:
+  build-and-run:
     runs-on: ubuntu-24.04
 
     steps:
@@ -17,8 +15,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          submodules: recursive # <-- important for your sunrun-api-extractor submodule
-          fetch-depth: 0 # fetch full history for submodules
+          submodules: recursive
+          fetch-depth: 0
 
       # 2. Set up Node.js
       - name: Setup Node.js
@@ -38,7 +36,12 @@ jobs:
           override: true
           default: false
 
-      # 5. Build Rust project
+      # 5. Build Rust project in submodule
       - name: Build Rust project
         run: cargo build --release
         working-directory: sunrun-api-extractor
+
+      # 6. Run your Node.js script
+      - name: Run automation script
+        run: node solar-monitor.js
+        # optionally: working-directory: path/to/your/script if not in root
