@@ -1,12 +1,12 @@
-name: Solar Monitor
+name: Daily Solar SMS
 
 on:
   schedule:
-    - cron: '0 8 * * 1' # every Monday at 8:00 AM UTC
+    - cron: '0 16 * * *' # every day at 9:00 AM MST (16:00 UTC)
   workflow_dispatch: # allows manual trigger
 
 jobs:
-  monitor:
+  sms:
     runs-on: ubuntu-latest
 
     steps:
@@ -21,8 +21,10 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Run solar monitor
+      - name: Run solar monitor SMS
         env:
+          SUNRUN_JWT: ${{ secrets.SUNRUN_JWT }}
+          SUNRUN_PROSPECT: ${{ secrets.SUNRUN_PROSPECT }}
           EMAIL_USER: ${{ secrets.EMAIL_USER }}
           EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
           EMAIL_TO: ${{ secrets.EMAIL_TO }}
