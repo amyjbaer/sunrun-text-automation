@@ -42,4 +42,10 @@ jobs:
       # 6. Run your Node.js script
       - name: Run automation script
         run: node solar-monitor.js
+        env:
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
+          JWT_TOKEN: ${{ secrets.JWT_TOKEN }}
+          PROSPECT_ID: ${{ secrets.PROSPECT_ID }}
         # optionally: working-directory: path/to/your/script if not in root
