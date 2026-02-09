@@ -2,7 +2,7 @@ import { execSync } from "child_process";
 import fs from "fs";
 import nodemailer from "nodemailer";
 
-const METRIC_FILES = ["production.json", "site.json", "battery.json"];
+const METRIC_FILE = "production.json"; // we only care about production.json
 
 // Read JWT and prospect_id from environment variables
 const jwtToken = process.env.SUNRUN_JWT;
@@ -29,32 +29,7 @@ function readJsonIfExists(filename) {
   }
 }
 
-function buildEmailContent(allMetrics) {
-  let lines = [];
-  let hasData = false;
-
-  for (const file of METRIC_FILES) {
-    lines.push(`=== ${file} ===`);
-    const data = allMetrics[file];
-    if (!data) {
-      lines.push("No data available or not applicable to this system\n");
-      continue;
-    }
-    hasData = true;
-    for (const key of Object.keys(data)) {
-      lines.push(`${key}: ${JSON.stringify(data[key])}`);
-    }
-    lines.push(""); // blank line between sections
-  }
-
-  if (!hasData) {
-    lines.push("⚠️ No metrics were returned by sunrun-api-extractor!");
-  }
-
-  return lines.join("\n");
-}
-
-async function sendEmail(subject, body) {
+async function sendSMS(message) {
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
@@ -65,30 +40,37 @@ async function sendEmail(subject, body) {
 
   await transporter.sendMail({
     from: process.env.EMAIL_USER,
-    to: process.env.EMAIL_TO,
-    subject,
-    text: body,
+    to: process.env.EMAIL_TO, // should be phone@sms-gateway.com
+    subject: "",               // SMS gateways usually ignore this
+    text: message,
   });
 
-  console.log("📨 Email sent:", subject);
+  console.log("📨 SMS sent:", message);
 }
 
 (async () => {
   try {
     runExtractor();
 
-    // Load all metric files if present
-    const allMetrics = {};
-    for (const file of METRIC_FILES) {
-      allMetrics[file] = readJsonIfExists(file);
+    const productionData = readJsonIfExists(METRIC_FILE);
+
+    let message;
+    if (productionData && productionData.yesterdayTotalKwh != null) {
+      message = `Solar production yesterday was ${productionData.yesterdayTotalKwh} kWh`;
+    } else {
+      message = "Failed to get solar production data";
     }
 
-    const emailBody = buildEmailContent(allMetrics);
-    await sendEmail("☀️ Weekly Solar Metrics", emailBody);
+    await sendSMS(message);
 
   } catch (err) {
     console.error("❌ Script failed:", err);
-
-    // Send failure email
-    const body = `The solar monitor script encountered an error:\n\n${err.stack}`;
+    await sendSMS("Failed to get solar production data");
+  } finally {
+    // Clean up temporary config
+    try {
+      fs.unlinkSync("config.json");
+    } catch {}
+  }
+})();
 
