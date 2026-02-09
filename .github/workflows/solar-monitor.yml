@@ -14,6 +14,8 @@ jobs:
       # 1️⃣ Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v3
+	with:
+	  path: .
 
       # 2️⃣ Setup Node.js for SMS script
       - name: Setup Node.js
