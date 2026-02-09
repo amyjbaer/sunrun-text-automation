@@ -1,48 +1,44 @@
-name: Daily Solar SMS
+name: Build Project
 
-# Trigger daily at 9 AM MST (16:00 UTC) and allow manual run
 on:
-  schedule:
-    - cron: '0 16 * * *' # 9 AM Arizona time
-  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  sms:
-    runs-on: ubuntu-latest
+  build:
+    runs-on: ubuntu-24.04
 
     steps:
-      # 1️⃣ Checkout repository
+      # 1. Checkout repo with submodules
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          submodules: recursive # <-- important for your sunrun-api-extractor submodule
+          fetch-depth: 0 # fetch full history for submodules
 
-      # 2️⃣ Setup Node.js for SMS script
+      # 2. Set up Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20'
+          node-version: 20
 
-      # 3️⃣ Install Node.js dependencies
-      - name: Install Node.js dependencies
+      # 3. Install Node dependencies
+      - name: Install npm dependencies
         run: npm install
 
-      # 4️⃣ Setup Rust
+      # 4. Set up Rust
       - name: Setup Rust
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           override: true
+          default: false
 
-      # 5️⃣ Build Rust extractor
-      - name: Build sunrun-api-extractor
-        working-directory: ./sunrun-api-extractor
+      # 5. Build Rust project
+      - name: Build Rust project
         run: cargo build --release
-
-      # 6️⃣ Run solar monitor SMS script
-      - name: Run solar monitor SMS
-        env:
-          SUNRUN_JWT: ${{ secrets.SUNRUN_JWT }}
-          SUNRUN_PROSPECT: ${{ secrets.SUNRUN_PROSPECT }}
-          EMAIL_USER: ${{ secrets.EMAIL_USER }}
-          EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
-          EMAIL_TO: ${{ secrets.EMAIL_TO }}
-        run: node solar-monitor.js
+        working-directory: sunrun-api-extractor
