@@ -1,0 +1,3 @@
+[submodule "sunrun-api-extractor"]
+	path = sunrun-api-extractor
+	url = git@github.com:charlesportwoodii/sunrun-api-extractor.git
