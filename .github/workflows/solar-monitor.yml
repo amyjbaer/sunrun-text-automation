@@ -44,6 +44,14 @@ jobs:
         run: cargo build --release -vv
         working-directory: sunrun-api-extractor
 
+      - name: Make Rust binary executable
+        run: chmod +x sunrun-api-extractor/target/release/sunrun-data-api
+
+      - name: Debug Rust binary
+        run: |
+          ls -lh sunrun-api-extractor/target/release
+          file sunrun-api-extractor/target/release/sunrun-data-api
+
       # 6. Run your Node.js script
       - name: Run automation script
         run: node solar-monitor.js
