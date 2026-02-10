@@ -59,12 +59,32 @@ function getProductionData() {
   const allRecords = db
     .prepare('SELECT * FROM solar ORDER BY timestamp DESC')
     .all();
-  console.log(`📊 Found ${allRecords.length} records in database`);
+  console.log(`📊 Total records in database: ${allRecords.length}`);
 
-  // Log sample data for debugging
-  if (allRecords.length > 0) {
-    console.log('📋 Sample records:');
-    allRecords.slice(0, 5).forEach((row, i) => {
+  // Calculate 24-hour window (from 24 hours ago until now)
+  const now = new Date();
+  const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+  const nowISO = now.toISOString();
+  const twentyFourHoursAgoISO = twentyFourHoursAgo.toISOString();
+
+  console.log(
+    `📅 Looking at last 24 hours: ${twentyFourHoursAgoISO} to ${nowISO}`
+  );
+
+  // Query for records in the last 24 hours
+  const recentRecords = db
+    .prepare(
+      'SELECT * FROM solar WHERE timestamp >= ? AND timestamp <= ? ORDER BY timestamp DESC'
+    )
+    .all(twentyFourHoursAgoISO, nowISO);
+
+  console.log(`📅 Found ${recentRecords.length} records in last 24 hours`);
+
+  // Log ALL records for debugging
+  if (recentRecords.length > 0) {
+    console.log('📋 All records in last 24 hours:');
+    recentRecords.forEach((row, i) => {
       console.log(
         `  [${i + 1}] pv_solar: ${row.pv_solar}, solar: ${
           row.solar
@@ -73,70 +93,48 @@ function getProductionData() {
     });
   }
 
-  // Calculate yesterday's total
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  yesterday.setHours(0, 0, 0, 0);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  // Also show daily totals for context
+  console.log('\n📊 Daily production totals:');
+  const dailyTotals = db
+    .prepare(
+      `
+    SELECT 
+      DATE(timestamp) as date,
+      SUM(solar) as total_kwh,
+      COUNT(*) as readings,
+      MIN(timestamp) as first_reading,
+      MAX(timestamp) as last_reading
+    FROM solar 
+    GROUP BY DATE(timestamp)
+    ORDER BY date DESC
+    LIMIT 7
+  `
+    )
+    .all();
 
-  const yesterdayStart = yesterday.toISOString();
-  const todayStart = today.toISOString();
+  dailyTotals.forEach((row) => {
+    console.log(
+      `  ${row.date}: ${row.total_kwh?.toFixed(2) || 0} kWh (${
+        row.readings
+      } readings)`
+    );
+  });
+
+  // Calculate total solar production in the 24-hour window
+  let totalSolar = 0;
+  recentRecords.forEach((row) => {
+    totalSolar += row.solar || 0;
+  });
 
   console.log(
-    `📅 Looking for records between ${yesterdayStart} and ${todayStart}`
+    `\n🔋 Total solar production (last 24h): ${totalSolar.toFixed(2)} kWh`
   );
 
-  const yesterdayRecords = db
-    .prepare('SELECT * FROM solar WHERE timestamp >= ? AND timestamp < ?')
-    .all(yesterdayStart, todayStart);
-
-  console.log(`📅 Found ${yesterdayRecords.length} records for yesterday`);
-
-  if (yesterdayRecords.length === 0) {
-    // Try using local date parsing
-    const localYesterdayStart =
-      yesterday.toISOString().split('T')[0] + ' 00:00:00';
-    const localTodayStart = today.toISOString().split('T')[0] + ' 00:00:00';
-    console.log(
-      `📅 Trying local dates: ${localYesterdayStart} to ${localTodayStart}`
-    );
-
-    const yesterdayRecordsLocal = db
-      .prepare('SELECT * FROM solar WHERE timestamp >= ? AND timestamp < ?')
-      .all(localYesterdayStart, localTodayStart);
-
-    console.log(
-      `📅 Found ${yesterdayRecordsLocal.length} records using local dates`
-    );
-
-    if (yesterdayRecordsLocal.length > 0) {
-      const totalSolar = yesterdayRecordsLocal.reduce(
-        (sum, row) => sum + (row.solar || 0),
-        0
-      );
-      console.log(
-        `🔋 Yesterday's total solar production: ${totalSolar.toFixed(2)} kWh`
-      );
-      db.close();
-      return { yesterdayTotalKwh: totalSolar };
-    }
-  }
-
-  if (yesterdayRecords.length > 0) {
-    const totalSolar = yesterdayRecords.reduce(
-      (sum, row) => sum + (row.solar || 0),
-      0
-    );
-    console.log(
-      `🔋 Yesterday's total solar production: ${totalSolar.toFixed(2)} kWh`
-    );
-    db.close();
-    return { yesterdayTotalKwh: totalSolar };
-  }
-
   db.close();
-  return null;
+  return {
+    yesterdayTotalKwh: totalSolar,
+    recordsCount: recentRecords.length,
+  };
 }
 
 // -----------------------------
@@ -170,13 +168,17 @@ async function sendSMS(message) {
 
     const productionData = getProductionData();
 
-    console.log('📊 Production data result:', productionData);
+    console.log('\n📊 Production data result:', productionData);
 
     let message;
-    if (productionData && productionData.yesterdayTotalKwh != null) {
-      message = `Solar production yesterday was ${productionData.yesterdayTotalKwh.toFixed(
+    if (
+      productionData &&
+      productionData.yesterdayTotalKwh != null &&
+      productionData.recordsCount > 0
+    ) {
+      message = `Solar production (last 24h): ${productionData.yesterdayTotalKwh.toFixed(
         2
-      )} kWh`;
+      )} kWh (${productionData.recordsCount} readings)`;
     } else {
       message = 'Failed to get solar production data';
     }
