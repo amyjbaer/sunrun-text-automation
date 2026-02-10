@@ -2,7 +2,7 @@ name: Build and Run SMS Automation
 
 on:
   schedule:
-    - cron: '*/5 * * * *'
+    - cron: '*/15 * * * *'
   workflow_dispatch: # allows manual runs from GitHub UI
 
 jobs:
