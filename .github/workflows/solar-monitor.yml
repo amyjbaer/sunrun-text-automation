@@ -2,7 +2,7 @@ name: Build and Run SMS Automation
 
 on:
   schedule:
-    - cron: '0 8 * * 1' # every Monday at 8:00 AM UTC
+    - cron: '0 16 * * 1' # every Monday at 8:00 AM UTC
   workflow_dispatch: # allows manual runs from GitHub UI
 
 jobs:
