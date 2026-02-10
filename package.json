@@ -7,6 +7,7 @@
     "start": "node solar-monitor.js"
   },
   "dependencies": {
+    "better-sqlite3": "^9.4.3",
     "nodemailer": "^6.9.4"
   },
   "engines": {
@@ -14,3 +15,4 @@
   },
   "type": "module"
 }
+
