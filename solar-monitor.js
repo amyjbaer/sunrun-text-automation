@@ -1,10 +1,18 @@
 import { execSync } from 'child_process';
 import fs from 'fs';
 import nodemailer from 'nodemailer';
+import path from 'path';
 
-const METRIC_FILE = 'production.json'; // we only care about production.json
+// -----------------------------
+// Constants & paths
+// -----------------------------
+const EXTRACTOR_DIR = path.resolve('sunrun-api-extractor');
+const CONFIG_FILE = path.join(EXTRACTOR_DIR, 'config.json');
+const METRIC_FILE = path.join(EXTRACTOR_DIR, 'production.json');
 
-// Read JWT and prospect_id from environment variables
+// -----------------------------
+// Environment variables
+// -----------------------------
 const jwtToken = process.env.SUNRUN_JWT;
 const prospectId = process.env.SUNRUN_PROSPECT;
 
@@ -12,19 +20,31 @@ if (!jwtToken || !prospectId) {
   throw new Error('SUNRUN_JWT or SUNRUN_PROSPECT environment variable not set');
 }
 
-// Write a temporary config.json for the extractor
-const config = { jwt_token: jwtToken, prospect_id: prospectId };
-fs.writeFileSync('config.json', JSON.stringify(config));
+// -----------------------------
+// Write temporary config.json
+// -----------------------------
+const config = {
+  jwt_token: jwtToken,
+  prospect_id: prospectId,
+};
 
+fs.writeFileSync(CONFIG_FILE, JSON.stringify(config));
+
+// -----------------------------
+// Run Rust extractor
+// -----------------------------
 function runExtractor() {
   console.log('📡 Running Sunrun Rust extractor...');
-  // Run the Rust binary
-  execSync(
-    './sunrun-api-extractor/target/release/sunrun-data-api --config config.json',
-    { stdio: 'inherit' }
-  );
+
+  execSync('./target/release/sunrun-data-api --config config.json', {
+    cwd: EXTRACTOR_DIR,
+    stdio: 'inherit',
+  });
 }
 
+// -----------------------------
+// Helpers
+// -----------------------------
 function readJsonIfExists(filename) {
   try {
     return JSON.parse(fs.readFileSync(filename, 'utf8'));
@@ -44,14 +64,17 @@ async function sendSMS(message) {
 
   await transporter.sendMail({
     from: process.env.EMAIL_FROM,
-    to: process.env.EMAIL_TO, // phone SMS gateway
-    subject: '', // SMS gateways usually ignore this
+    to: process.env.EMAIL_TO,
+    subject: '',
     text: message,
   });
 
   console.log('📨 SMS sent:', message);
 }
 
+// -----------------------------
+// Main
+// -----------------------------
 (async () => {
   try {
     runExtractor();
@@ -68,11 +91,13 @@ async function sendSMS(message) {
     await sendSMS(message);
   } catch (err) {
     console.error('❌ Script failed:', err);
-    await sendSMS('Failed to get solar production data');
+    try {
+      await sendSMS('Failed to get solar production data');
+    } catch {}
   } finally {
     // Clean up temporary config
     try {
-      fs.unlinkSync('config.json');
+      fs.unlinkSync(CONFIG_FILE);
     } catch {}
   }
 })();
