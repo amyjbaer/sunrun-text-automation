@@ -34,6 +34,11 @@ jobs:
           toolchain: 1.79.0
           override: true
 
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: 'sunrun-api-extractor -> target'
+
       # 5. Build Rust project in submodule
       - name: Build Rust project
         run: cargo build --release
