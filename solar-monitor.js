@@ -43,6 +43,16 @@ function runExtractor() {
 }
 
 // -----------------------------
+// Convert UTC timestamp to Mountain Time date string
+// -----------------------------
+function getMountainTimeDate(utcTimestamp) {
+  const utcDate = new Date(utcTimestamp);
+  // Mountain Time is UTC-7 (MDT) or UTC-6 (MST) - use -7 for simplicity
+  const mtDate = new Date(utcDate.getTime() - 7 * 60 * 60 * 1000);
+  return mtDate.toISOString().split('T')[0];
+}
+
+// -----------------------------
 // Query SQLite for production data
 // -----------------------------
 function getProductionData() {
@@ -88,35 +98,39 @@ function getProductionData() {
       console.log(
         `  [${i + 1}] pv_solar: ${row.pv_solar}, solar: ${
           row.solar
-        }, timestamp: ${row.timestamp}`
+        }, timestamp: ${row.timestamp} (MT: ${getMountainTimeDate(
+          row.timestamp
+        )})`
       );
     });
   }
 
-  // Also show daily totals for context
-  console.log('\n📊 Daily production totals:');
-  const dailyTotals = db
-    .prepare(
-      `
-    SELECT 
-      DATE(timestamp) as date,
-      SUM(solar) as total_kwh,
-      COUNT(*) as readings,
-      MIN(timestamp) as first_reading,
-      MAX(timestamp) as last_reading
-    FROM solar 
-    GROUP BY DATE(timestamp)
-    ORDER BY date DESC
-    LIMIT 7
-  `
-    )
+  // Calculate daily totals grouped by Mountain Time date
+  console.log('\n📊 Daily production totals (Mountain Time):');
+
+  // Get all records with their raw timestamps
+  const allRecordsRaw = db
+    .prepare('SELECT solar, timestamp FROM solar ORDER BY timestamp ASC')
     .all();
 
-  dailyTotals.forEach((row) => {
+  // Group by Mountain Time date
+  const dailyMap = {};
+  allRecordsRaw.forEach((row) => {
+    const mtDateStr = getMountainTimeDate(row.timestamp);
+
+    if (!dailyMap[mtDateStr]) {
+      dailyMap[mtDateStr] = { total: 0, readings: 0 };
+    }
+    dailyMap[mtDateStr].total += row.solar || 0;
+    dailyMap[mtDateStr].readings += 1;
+  });
+
+  // Sort by date descending and log
+  const sortedDates = Object.keys(dailyMap).sort().reverse();
+  sortedDates.slice(0, 7).forEach((date) => {
+    const data = dailyMap[date];
     console.log(
-      `  ${row.date}: ${row.total_kwh?.toFixed(2) || 0} kWh (${
-        row.readings
-      } readings)`
+      `  ${date}: ${data.total.toFixed(2)} kWh (${data.readings} readings)`
     );
   });
 
@@ -131,9 +145,15 @@ function getProductionData() {
   );
 
   db.close();
+
+  // Get the most recent day with data for fallback SMS (using Mountain Time)
+  const mostRecentDate = sortedDates.find((d) => (dailyMap[d].total || 0) > 0);
+
   return {
     yesterdayTotalKwh: totalSolar,
     recordsCount: recentRecords.length,
+    mostRecentDayTotal: mostRecentDate ? dailyMap[mostRecentDate].total : null,
+    mostRecentDayDate: mostRecentDate,
   };
 }
 
