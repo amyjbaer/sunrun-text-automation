@@ -39,8 +39,6 @@ jobs:
         run: cargo build --release
         working-directory: sunrun-api-extractor
 
-      - run: chmod +x sunrun-api-extractor/target/release/sunrun-api-extractor
-
       # 6. Run your Node.js script
       - name: Run automation script
         run: node solar-monitor.js

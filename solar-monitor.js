@@ -20,7 +20,7 @@ function runExtractor() {
   console.log('📡 Running Sunrun Rust extractor...');
   // Run the Rust binary
   execSync(
-    './sunrun-api-extractor/target/release/sunrun-api-extractor --config config.json',
+    './sunrun-api-extractor/target/release/sunrun-data-api --config config.json',
     { stdio: 'inherit' }
   );
 }
