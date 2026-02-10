@@ -2,8 +2,6 @@ import { execSync } from 'child_process';
 import fs from 'fs';
 import nodemailer from 'nodemailer';
 
-import fs from 'fs';
-
 const BIN = './target/release/sunrun-data-api';
 
 if (!fs.existsSync(BIN)) {
