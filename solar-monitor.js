@@ -7,7 +7,7 @@ import path from 'path';
 // Constants & paths
 // -----------------------------
 const EXTRACTOR_DIR = path.resolve('sunrun-api-extractor');
-const CONFIG_FILE = path.join(EXTRACTOR_DIR, 'config.json');
+const CONFIG_FILE = path.join(EXTRACTOR_DIR, 'data.hcl');
 const METRIC_FILE = path.join(EXTRACTOR_DIR, 'production.json');
 
 // -----------------------------
@@ -21,14 +21,13 @@ if (!jwtToken || !prospectId) {
 }
 
 // -----------------------------
-// Write temporary config.json
+// Write temporary data.hcl (HCL format)
 // -----------------------------
-const config = {
-  jwt_token: jwtToken,
-  prospect_id: prospectId,
-};
+const configHCL = `prospect_id = "${prospectId}"
+jwt_token = "${jwtToken}"
+`;
 
-fs.writeFileSync(CONFIG_FILE, JSON.stringify(config));
+fs.writeFileSync(CONFIG_FILE, configHCL);
 
 // -----------------------------
 // Run Rust extractor
@@ -36,7 +35,7 @@ fs.writeFileSync(CONFIG_FILE, JSON.stringify(config));
 function runExtractor() {
   console.log('📡 Running Sunrun Rust extractor...');
 
-  execSync('./target/release/sunrun-data-api --config config.json', {
+  execSync('./target/release/sunrun-data-api', {
     cwd: EXTRACTOR_DIR,
     stdio: 'inherit',
   });
