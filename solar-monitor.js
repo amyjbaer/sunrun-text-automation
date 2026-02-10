@@ -134,23 +134,12 @@ function getProductionData() {
     );
   });
 
-  // Calculate total solar production in the 24-hour window
-  let totalSolar = 0;
-  recentRecords.forEach((row) => {
-    totalSolar += row.solar || 0;
-  });
-
-  console.log(
-    `\n🔋 Total solar production (last 24h): ${totalSolar.toFixed(2)} kWh`
-  );
-
   db.close();
 
   // Get the most recent day with data for fallback SMS (using Mountain Time)
   const mostRecentDate = sortedDates.find((d) => (dailyMap[d].total || 0) > 0);
 
   return {
-    yesterdayTotalKwh: totalSolar,
     recordsCount: recentRecords.length,
     mostRecentDayTotal: mostRecentDate ? dailyMap[mostRecentDate].total : null,
     mostRecentDayDate: mostRecentDate,
@@ -191,14 +180,10 @@ async function sendSMS(message) {
     console.log('\n📊 Production data result:', productionData);
 
     let message;
-    if (
-      productionData &&
-      productionData.yesterdayTotalKwh != null &&
-      productionData.recordsCount > 0
-    ) {
-      message = `Solar production (last 24h): ${productionData.yesterdayTotalKwh.toFixed(
-        2
-      )} kWh (${productionData.recordsCount} readings)`;
+    if (productionData && productionData.mostRecentDayTotal) {
+      message = `Solar production (${
+        productionData.mostRecentDayDate
+      }): ${productionData.mostRecentDayTotal.toFixed(2)} kWh`;
     } else {
       message = 'Failed to get solar production data';
     }
