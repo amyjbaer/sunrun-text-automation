@@ -2,12 +2,6 @@ import { execSync } from 'child_process';
 import fs from 'fs';
 import nodemailer from 'nodemailer';
 
-const BIN = './target/release/sunrun-data-api';
-
-if (!fs.existsSync(BIN)) {
-  throw new Error(`Extractor binary not found at ${BIN}`);
-}
-
 const METRIC_FILE = 'production.json'; // we only care about production.json
 
 // Read JWT and prospect_id from environment variables
@@ -24,7 +18,11 @@ fs.writeFileSync('config.json', JSON.stringify(config));
 
 function runExtractor() {
   console.log('📡 Running Sunrun Rust extractor...');
-  execSync(`${BIN} --config config.json`, { stdio: 'inherit' });
+  // Run the Rust binary
+  execSync(
+    './sunrun-api-extractor/target/release/sunrun-data-api --config config.json',
+    { stdio: 'inherit' }
+  );
 }
 
 function readJsonIfExists(filename) {
