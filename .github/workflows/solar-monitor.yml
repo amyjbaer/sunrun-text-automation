@@ -44,6 +44,11 @@ jobs:
         run: cargo build --release
         working-directory: sunrun-api-extractor
 
+      - name: Where did Rust put the binary?
+        run: |
+          echo "PWD: $(pwd)"
+          find . -type f -name "sunrun-data-api" -print
+
       # 6. Run your Node.js script
       - name: Run automation script
         run: node solar-monitor.js
