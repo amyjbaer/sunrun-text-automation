@@ -1,6 +1,8 @@
 name: Build and Run SMS Automation
 
 on:
+  repository_dispatch:
+    types: [daily-solar-check]
   workflow_dispatch: # allows manual runs from GitHub UI
 
 jobs:
