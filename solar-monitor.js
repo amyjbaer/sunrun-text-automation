@@ -152,6 +152,9 @@ function getProductionData() {
     recordsCount: recentRecords.length,
     mostRecentDayTotal: mostRecentDate ? dailyMap[mostRecentDate].total : null,
     mostRecentDayDate: mostRecentDate,
+    mostRecentDayReadings: mostRecentDate
+      ? dailyMap[mostRecentDate].readings
+      : null,
   };
 }
 
@@ -192,7 +195,11 @@ async function sendSMS(message) {
     if (productionData && productionData.mostRecentDayTotal !== null) {
       message = `Solar production (${
         productionData.mostRecentDayDate
-      }): ${productionData.mostRecentDayTotal.toFixed(2)} kWh`;
+      }): ${productionData.mostRecentDayTotal.toFixed(2)} kWh (${
+        productionData.mostRecentDayReadings
+          ? productionData.mostRecentDayReadings
+          : 'null'
+      } readings)`;
     } else {
       message = 'Failed to get solar production data';
     }
