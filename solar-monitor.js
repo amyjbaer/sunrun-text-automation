@@ -136,8 +136,8 @@ function getProductionData() {
 
   db.close();
 
-  // Get the most recent day with data for fallback SMS (using Mountain Time)
-  const mostRecentDate = sortedDates.find((d) => (dailyMap[d].total || 0) > 0);
+  // Get the previous Mountain Time day (even if zero)
+  const mostRecentDate = sortedDates[0];
 
   return {
     recordsCount: recentRecords.length,
@@ -180,7 +180,7 @@ async function sendSMS(message) {
     console.log('\n📊 Production data result:', productionData);
 
     let message;
-    if (productionData && productionData.mostRecentDayTotal) {
+    if (productionData && productionData.mostRecentDayTotal !== null) {
       message = `Solar production (${
         productionData.mostRecentDayDate
       }): ${productionData.mostRecentDayTotal.toFixed(2)} kWh`;
