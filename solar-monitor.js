@@ -136,8 +136,17 @@ function getProductionData() {
 
   db.close();
 
-  // Get the previous Mountain Time day (even if zero)
-  const mostRecentDate = sortedDates[0];
+  // Get yesterday's Mountain Time date (the full previous day)
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  // Adjust for Mountain Time (UTC-7)
+  const yesterdayMT = new Date(yesterday.getTime() - 7 * 60 * 60 * 1000);
+  const yesterdayDateStr = yesterdayMT.toISOString().split('T')[0];
+
+  // Use yesterday's date if we have data, otherwise fall back to most recent
+  const mostRecentDate = dailyMap[yesterdayDateStr]
+    ? yesterdayDateStr
+    : sortedDates[0];
 
   return {
     recordsCount: recentRecords.length,
