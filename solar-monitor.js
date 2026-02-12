@@ -173,7 +173,7 @@ async function sendSMS(message) {
   await transporter.sendMail({
     from: process.env.EMAIL_FROM,
     to: process.env.EMAIL_TO,
-    subject: '',
+    subject: 'Daily Solar Production',
     text: message,
   });
 
